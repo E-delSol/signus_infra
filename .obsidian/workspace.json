@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/infraestructure/07-websockets-nginx.md",
+                "file": "README.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "07-websockets-nginx"
+              "title": "README"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/infraestructure/07-websockets-nginx.md",
+                "file": "README.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Enlaces entrantes de 07-websockets-nginx"
+              "title": "Enlaces entrantes de README"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/infraestructure/07-websockets-nginx.md",
+                "file": "README.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Enlaces salientes de 07-websockets-nginx"
+              "title": "Enlaces salientes de README"
             }
           },
           {
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/infraestructure/07-websockets-nginx.md",
+                "file": "README.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Esquema de 07-websockets-nginx"
+              "title": "Esquema de README"
             }
           }
         ]
@@ -185,13 +185,17 @@
   },
   "active": "4597d438b9844440",
   "lastOpenFiles": [
-    "docs/infraestructure/06-security.md",
-    "docs/infraestructure/05-proxy-nginx.md",
-    "docs/infraestructure/04-deployment-backend.md",
-    "docs/infraestructure/03-networking.md",
-    "docs/infraestructure/02-docker-setup.md",
-    "docs/infraestructure/01-server-setup.md",
+    "docs/infrastructure/07-websockets-nginx.md",
+    "README.md",
     "README.md",
+    "docs/infrastructure/06-security.md",
+    "LICENSE",
+    "docs/infrastructure/05-proxy-nginx.md",
+    "docs/infrastructure/04-deployment-backend.md",
+    "docs/infrastructure/03-networking.md",
+    "docs/infrastructure/02-docker-setup.md",
+    "docs/infrastructure/01-server-setup.md",
+    "LICENCE",
     "deployment"
   ]
 }

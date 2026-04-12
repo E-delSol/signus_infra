@@ -1,177 +1,133 @@
 # 🏗️ Signus Infrastructure
 
+Production-ready infrastructure and deployment architecture for a real-time system.
+
+This repository documents how **Signus** is deployed in a real environment using Docker, Nginx, and a WebSocket-enabled backend.
+
+---
+
+## 🚀 Project Summary
+
+This repository demonstrates a production-oriented infrastructure setup for a real-time application stack.
+
+It includes:
+
+- **Nginx** as the public entry point
+    
+- **Docker** for service isolation and reproducible deployment
+    
+- **Ktor + PostgreSQL** running behind internal networking
+    
+- **WebSockets** properly handled at the proxy layer
+    
+- **Technical documentation** capturing real deployment decisions and issues
+    
+
+---
+
+## 🧩 What this repository demonstrates
+
+- Designing and deploying a real-world backend infrastructure
+    
+- Running containerized services with Docker Compose
+    
+- Configuring Nginx as a reverse proxy for HTTP and WebSockets
+    
+- Debugging real deployment issues (WebSocket fallback to polling)
+    
+- Structuring infrastructure documentation for maintainability
+    
+
+---
+
 ## 📌 Overview
 
-This repository contains the infrastructure, deployment configuration, and technical documentation for the **Signus** platform.
+`signus_infra` is the infrastructure repository of the Signus ecosystem. It captures how the system is deployed, connected, and secured in a production-oriented setup.
 
-It defines how the system is deployed, connected, and exposed in production, including:
+Key characteristics:
 
-- server setup
+- Nginx acts as the single public entry point
     
-- Docker services
+- The backend and database run inside Docker containers
     
-- networking
+- Internal services communicate through Docker networking
     
-- reverse proxy (Nginx)
+- Public exposure is minimized by design
     
-- security considerations
+- WebSocket behavior is validated at the infrastructure level
     
 
 ---
 
-## 🧱 Repository Structure
+## 🌐 Part of the Signus Ecosystem
 
-```text
-signus_infra/
-├── docs/
-│   └── infrastructure/
-│       ├── 01-server-setup.md
-│       ├── 02-docker-setup.md
-│       ├── 03-networking.md
-│       ├── 04-deployment-backend.md
-│       ├── 05-proxy-nginx.md
-│       ├── 06-security.md
-│       └── 07-websockets-nginx.md
-├── proxy/
-│   └── nginx.conf
-└── deployment/
-```
+Signus is structured as a multi-repository system:
+
+- [signus_app](https://github.com/E-delSol/signus_app) — Android client
+    
+- [signus_back](https://github.com/E-delSol/signus_back) — Backend API (Ktor + WebSockets)
+    
+- **signus_infra** — Infrastructure, deployment, and technical documentation (this repository)
+    
 
 ---
 
-## 🌐 System Architecture
+## 🏗️ Architecture
 
 ```text
-Client (Android)
+Android Client
    ↓
-Nginx (Reverse Proxy)
+Nginx (public reverse proxy)
    ↓
-Backend (Ktor API)
+Ktor Backend API
    ↓
 PostgreSQL
 ```
 
-- **Nginx** acts as the single public entry point.
-    
-- **Backend** is not directly exposed to the internet.
-    
-- **Database** is fully isolated inside Docker network.
-    
+Infrastructure design:
 
----
-
-## 🐳 Services
-
-### Reverse Proxy
-
-- Nginx
+- Nginx exposes the public HTTP entry point
     
-- Handles HTTP traffic and WebSocket upgrade
+- Backend services are proxied internally and not directly exposed
     
-- Exposes port `80`
+- PostgreSQL remains isolated behind Docker networking
     
-
-### Backend
-
-- Ktor application
-    
-- Runs inside Docker
-    
-- Connected to internal network only
-    
-
-### Database
-
-- PostgreSQL 16
-    
-- Persistent volume enabled
+- Service-to-service communication relies on Docker DNS
     
 
 ---
 
-## 🔌 Networking
+## 🧰 Stack and Infrastructure Components
 
-- Docker network used for internal communication
+- **Docker** — containerized service execution
     
-- Services communicate via container names (DNS)
+- **Nginx** — reverse proxy and public ingress
     
-- Proxy is attached to backend network via external network
+- **Ktor** — backend application layer
+    
+- **PostgreSQL** — persistent data storage
+    
+- **WebSockets** — real-time communication
+    
+- **Docker networking** — service isolation
     
 
-See:
+Repository structure highlights:
 
-```text
-docs/infrastructure/03-networking.md
-```
+- [proxy/nginx.conf](proxy/nginx.conf) — Nginx proxy configuration
+    
+- `deployment/` — deployment workspace
+    
+- `docs/infrastructure/` — detailed technical documentation
+    
 
 ---
 
-## 🔌 WebSockets
+## 🔌 Real-Time / WebSocket Deployment Note
 
-WebSockets are used as the **primary real-time channel**.
+One of the key infrastructure findings in this project is that **WebSockets behind Nginx require explicit configuration**.
 
-Important:
-
-- Nginx must support connection upgrade
-    
-- Missing configuration leads to silent fallback to polling
-    
-
-See:
-
-```text
-docs/infrastructure/07-websockets-nginx.md
-```
-
----
-
-## 🔐 Security
-
-- SSH key-based authentication only
-    
-- Fail2Ban enabled
-    
-- Minimal exposed ports:
-    
-    - `22` → SSH
-        
-    - `80` → HTTP
-        
-- Backend and DB not publicly exposed
-    
-
-See:
-
-```text
-docs/infrastructure/06-security.md
-```
-
----
-
-## 🚀 Deployment
-
-The backend is deployed using Docker Compose:
-
-- `signus-backend`
-    
-- `signus-db`
-    
-- `signus-proxy`
-    
-
-Typical workflow:
-
-```bash
-docker-compose up -d
-```
-
----
-
-## ⚠️ Important Notes
-
-### WebSocket support is NOT automatic in Nginx
-
-This project explicitly requires:
+Without:
 
 ```nginx
 proxy_http_version 1.1;
@@ -179,69 +135,103 @@ proxy_set_header Upgrade $http_upgrade;
 proxy_set_header Connection "upgrade";
 ```
 
-Without this:
+the backend receives `/ws` as a normal HTTP request, the WebSocket handshake fails, and the client may silently fall back to polling.
 
-- WebSocket fails
+### Key takeaway
+
+- WebSocket support is not automatic at the proxy layer
     
-- App falls back to polling
+- Silent fallback to polling can hide deployment issues
     
-- Backend load increases significantly
+- Real-time systems require infrastructure-level validation
     
 
----
+📄 Full explanation:
 
-## 🧠 Design Principles
-
-- minimal exposure
-    
-- clear separation of concerns
-    
-- infrastructure as code (where possible)
-    
-- reproducible environments
-    
-- observability via logs
+- [WebSockets + Nginx](docs/infrastructure/07-websockets-nginx.md)
     
 
 ---
 
-## 🔗 Related Repositories
+## 🔐 Security
 
-- `signus_app` → Android client
+The infrastructure follows a conservative, production-oriented baseline:
+
+- SSH key-based access
     
-- `signus_back` → Backend API
+- Minimal public exposure
+    
+- Fail2Ban protection
+    
+- Backend not directly exposed to the Internet
+    
+- Database isolated from public access
+    
+- Environment-based handling of sensitive configuration
     
 
 ---
 
-## 📌 Status
+## 📚 Documentation Index
 
-Current state:
+Detailed infrastructure documentation:
 
-- backend deployed and reachable
+- [01 - Server Setup](docs/infrastructure/01-server-setup.md)
     
-- reverse proxy configured
+- [02 - Docker Setup](docs/infrastructure/02-docker-setup.md)
     
-- WebSocket working through Nginx
+- [03 - Networking](docs/infrastructure/03-networking.md)
     
-- real-time communication restored
+- [04 - Backend Deployment](docs/infrastructure/04-deployment-backend.md)
     
-- fallback polling minimized
+- [05 - Proxy Nginx](docs/infrastructure/05-proxy-nginx.md)
+    
+- [06 - Security](docs/infrastructure/06-security.md)
+    
+- [07 - WebSockets + Nginx](docs/infrastructure/07-websockets-nginx.md)
+    
+
+---
+
+## 🧠 Engineering Highlights
+
+- End-to-end deployment path instead of isolated configuration snippets
+    
+- Clear separation between ingress, application, and data layers
+    
+- Real-world debugging of WebSocket and Nginx interaction
+    
+- Controlled Docker networking for service isolation
+    
+- Documentation treated as part of the engineering deliverable
     
 
 ---
 
 ## 🔮 Future Improvements
 
-- HTTPS (Let's Encrypt)
+- HTTPS with Let's Encrypt
     
-- domain configuration
+- Domain configuration and host hardening
     
-- CI/CD pipeline
+- CI/CD automation for deployment workflows
     
-- environment separation (dev / staging / prod)
+- Environment separation (dev / staging / production)
     
-- centralized logging and monitoring
+- Centralized logging and monitoring
     
+
+---
+
+## 📄 License
+
+- [LICENSE](LICENSE)
+    
+
+---
+
+## 👤 Author
+
+E-delSol
 
 ---
