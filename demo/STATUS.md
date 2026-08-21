@@ -18,22 +18,15 @@
 - ✅ Emulator launch (nohup + disown to survive script exit)
 - ✅ Serial detection by AVD (launch one at a time)
 
-## Active Bug: grep regex in wait_for_boot
+## Active Bug: grep regex in wait_for_boot — ✅ FIXED
 
 **File:** `demo/demo.sh`, `wait_for_boot()` function
 
 **Problem:** `grep "$serial"` where serial is `emulator-5554` — the dash `-` is interpreted as a regex range operator, causing "Unmatched [" errors.
 
-**Fix:** Change `grep "$serial"` to `grep -F "$serial"` (fixed-string match, not regex).
+**Fix applied:** Changed `grep "$serial"` to `grep -F "$serial"` (fixed-string match, not regex).
 
-**Location in file:** Line ~415, inside Phase 1 of wait_for_boot:
-```bash
-# BROKEN:
-state=$(adb devices 2>/dev/null | grep "$serial" | awk '{print $2}') || true
-
-# FIX:
-state=$(adb devices 2>/dev/null | grep -F "$serial" | awk '{print $2}') || true
-```
+**Location in file:** Line 415, Phase 1 of wait_for_boot.
 
 ## Fixed Issues (already committed)
 

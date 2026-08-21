@@ -409,6 +409,20 @@ wait_for_boot() {
     local serial=$1 timeout=$2 start_time
     start_time=$(date +%s)
 
+    # Phase 1: Wait for device to come online (state "device", not "offline")
+    while true; do
+        local state
+        state=$(adb devices 2>/dev/null | grep -F "$serial" | awk '{print $2}') || true
+        if [ "$state" = "device" ]; then
+            break
+        fi
+        if [ $(($(date +%s) - start_time)) -ge "$timeout" ]; then
+            return 1
+        fi
+        sleep 3
+    done
+
+    # Phase 2: Wait for sys.boot_completed = 1
     while true; do
         local boot_completed
         boot_completed=$(adb -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r') || true
