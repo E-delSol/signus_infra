@@ -27,15 +27,47 @@ USER_B_NAME="Bob"
 AVD_A="User1_light"
 AVD_B="User2_light"
 
-BOOT_TIMEOUT=180
+BOOT_TIMEOUT=300
 
 # -- Resolve repository paths -------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPOS_PARENT="$(dirname "$SCRIPT_DIR")"
 
-BACKEND_DIR="${SIGNUS_BACKEND_DIR:-${REPOS_PARENT}/signus_back}"
-APP_DIR="${SIGNUS_APP_DIR:-${REPOS_PARENT}/signus_app}"
+# Try common locations:
+# 1. Environment variables (explicit)
+# 2. Siblings of signus_infra parent
+# 3. Known local paths
+BACKEND_DIR="${SIGNUS_BACKEND_DIR:-}"
+APP_DIR="${SIGNUS_APP_DIR:-}"
+
+if [ -z "$BACKEND_DIR" ]; then
+    for candidate in \
+        "${REPOS_PARENT}/signus_back" \
+        "${REPOS_PARENT}/../signus_back" \
+        "$(dirname "$REPOS_PARENT")/signus_back" \
+        "$HOME/Intellij_Proyects/signus_back" \
+        "$HOME/projects/signus_back"; do
+        if [ -d "$candidate" ]; then
+            BACKEND_DIR="$candidate"
+            break
+        fi
+    done
+fi
+
+if [ -z "$APP_DIR" ]; then
+    for candidate in \
+        "${REPOS_PARENT}/signus_app" \
+        "${REPOS_PARENT}/../signus_app" \
+        "$(dirname "$REPOS_PARENT")/signus_app" \
+        "$HOME/AndroidStudioProjects/Duo" \
+        "$HOME/projects/signus_app"; do
+        if [ -d "$candidate" ]; then
+            APP_DIR="$candidate"
+            break
+        fi
+    done
+fi
 
 # -- Output helpers -----------------------------------------------------------
 
@@ -144,18 +176,25 @@ check_prerequisites() {
 wait_for_port() {
     local port=$1 timeout=$2 start_time
     start_time=$(date +%s)
-    while ! curl -sf "http://localhost:${port}/auth/login" -o /dev/null 2>/dev/null; do
+    while true; do
+        # Use curl without -f to accept any HTTP response (backend is alive)
+        local http_code
+        http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${port}/auth/login" 2>/dev/null) || true
+        if [ -n "$http_code" ] && [ "$http_code" != "000" ]; then
+            return 0
+        fi
         if [ $(($(date +%s) - start_time)) -ge "$timeout" ]; then return 1; fi
         sleep 2
     done
-    return 0
 }
 
 start_backend() {
     print_section "Starting backend"
 
-    # Check if backend is already available
-    if curl -sf "${API}/auth/login" -o /dev/null 2>/dev/null; then
+    # Check if backend is already available (any HTTP response means it's alive)
+    local http_code
+    http_code=$(curl -s -o /dev/null -w "%{http_code}" "${API}/auth/login" 2>/dev/null) || true
+    if [ -n "$http_code" ] && [ "$http_code" != "000" ]; then
         print_ok "Backend already running on port ${BACKEND_PORT}, reusing"
         return 0
     fi
@@ -230,7 +269,7 @@ create_or_login_user() {
     if [ -n "$response" ]; then
         token=$(echo "$response" | python3 -c "import sys,json; print(json.load(sys.stdin)['accessToken'])" 2>/dev/null) || true
         if [ -n "$token" ]; then
-            print_ok "${label} created"
+            print_ok "${label} created" >&2
             echo "$token"
             return 0
         fi
@@ -244,13 +283,13 @@ create_or_login_user() {
     if [ -n "$response" ]; then
         token=$(echo "$response" | python3 -c "import sys,json; print(json.load(sys.stdin)['accessToken'])" 2>/dev/null) || true
         if [ -n "$token" ]; then
-            print_ok "${label} logged in (already existed)"
+            print_ok "${label} logged in (already existed)" >&2
             echo "$token"
             return 0
         fi
     fi
 
-    print_fail "Failed to create or login ${label}"
+    print_fail "Failed to create or login ${label}" >&2
     return 1
 }
 
@@ -391,8 +430,10 @@ start_emulator_for_avd() {
     serial_before=$(adb devices | grep -o 'emulator-[0-9]*' | sort)
 
     print_step "Starting emulator: $avd ($label)..."
-    "$ANDROID_HOME/emulator/emulator" -avd "$avd" -no-audio -gpu auto &>/dev/null &
+    nohup "$ANDROID_HOME/emulator/emulator" -avd "$avd" -no-audio -gpu auto \
+        > "${DEMO_DIR}/emu_${avd}.log" 2>&1 &
     local emu_pid=$!
+    disown "$emu_pid" 2>/dev/null || true
 
     # Wait for a new emulator serial to appear
     local start_time
@@ -418,6 +459,7 @@ start_emulators() {
     print_section "Starting Android emulators"
 
     SERIAL_A=$(start_emulator_for_avd "$AVD_A" "User A (Alice)")
+    sleep 5  # Let first emulator settle before starting second
     SERIAL_B=$(start_emulator_for_avd "$AVD_B" "User B (Bob)")
 }
 
