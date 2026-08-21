@@ -235,3 +235,79 @@ Detailed infrastructure documentation:
 E-delSol
 
 ---
+
+## Demo Launcher
+
+One-command demo that sets up Signus with two linked users on Android emulators.
+
+### Prerequisites
+
+- Java/JDK 11+
+- Android SDK (`ANDROID_HOME` set)
+- `adb` and `emulator` in PATH
+- Docker and Docker Compose
+- AVDs: `User1_light` and `User2_light`
+- Python 3 (for JSON parsing in the script)
+
+### Running the demo
+
+```bash
+./demo/demo.sh
+```
+
+This will:
+1. Check all prerequisites
+2. Start the backend (PostgreSQL + Ktor) in Docker
+3. Create two users (Alice & Bob) and link them
+4. Build the demo APK
+5. Launch two visible emulators
+6. Install the app and inject authentication tokens
+7. Open Signus on both devices ready to use
+
+### What it does
+
+| Step | Description |
+|------|-------------|
+| Backend | Starts Docker containers on port 8080 (reuses if already running) |
+| Users | Creates `alice@signus-demo.com` and `bob@signus-demo.com` |
+| Linking | Creates a pairing session and confirms it |
+| APK | Builds `assembleDemo` variant (BASE_URL=http://10.0.2.2:8080) |
+| Emulators | Launches `User1_light` and `User2_light` visibly |
+| Auth | Injects JWT tokens via BroadcastReceiver (no UI automation) |
+
+### Stopping the demo
+
+The script does not close emulators or the backend. To stop them:
+
+```bash
+# Stop emulators
+adb -s emulator-5554 emu kill
+adb -s emulator-5556 emu kill
+
+# Stop backend
+cd /path/to/signus_back && docker compose down
+```
+
+### Configuration
+
+Environment variables for custom paths:
+
+```bash
+export SIGNUS_BACKEND_DIR=/path/to/signus_back
+export SIGNUS_APP_DIR=/path/to/signus_app
+./demo/demo.sh
+```
+
+### Creating AVDs
+
+If the required AVDs don't exist:
+
+```bash
+$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+    -n User1_light -k "system-images;android-33;google_apis;x86_64" \
+    -d "pixel_4"
+
+$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+    -n User2_light -k "system-images;android-33;google_apis;x86_64" \
+    -d "pixel_4"
+```
