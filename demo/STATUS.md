@@ -6,56 +6,35 @@
 |-----------|--------|--------|
 | signus_back | `feat/demo-optional-fcm` | ✅ Committed, compiles, Docker builds |
 | signus_app | `feat/demo-mode` | ✅ Committed, APK builds (assembleDemo) |
-| signus_infra | `feat/demo-script` | ⚠️ Committed, has active bug |
+| signus_infra | `feat/demo-script` | ✅ Committed, tested end-to-end |
 
-## What Works
+## ✅ End-to-End Verified (21 Aug 2026)
 
-- ✅ Prerequisites check (Java, SDK, Docker, AVDs)
-- ✅ Backend detection and startup (reuses if running)
-- ✅ User creation and login (idempotent: register→409→login)
-- ✅ Linking verification (checks /me partnerId before creating)
-- ✅ APK build (assembleDemo, correct BuildConfig)
-- ✅ Emulator launch (nohup + disown to survive script exit)
-- ✅ Serial detection by AVD (launch one at a time)
+Full flow tested manually on physical emulators:
+1. ✅ Prerequisites check (Java, SDK, Docker, AVDs)
+2. ✅ Backend detection and startup (reuses if running)
+3. ✅ User creation and login (idempotent: register→409→login)
+4. ✅ Linking verification (checks /me partnerId before creating)
+5. ✅ APK build (assembleDemo, correct BuildConfig)
+6. ✅ Emulator launch with **setsid** (fully detached from parent shell)
+7. ✅ Serial detection by AVD (launch one at a time, diff serials)
+8. ✅ Boot detection (wait_for_boot with `grep -F` for fixed-string match)
+9. ✅ APK install on both emulators
+10. ✅ App launch (must launch BEFORE broadcast injection)
+11. ✅ JWT injection via **explicit component** (`-n .DemoTokenReceiver`)
+12. ✅ WebSocket connected, receiving real-time updates
 
-## Active Bug: grep regex in wait_for_boot — ✅ FIXED
+## Fixed Issues (all committed)
 
-**File:** `demo/demo.sh`, `wait_for_boot()` function
-
-**Problem:** `grep "$serial"` where serial is `emulator-5554` — the dash `-` is interpreted as a regex range operator, causing "Unmatched [" errors.
-
-**Fix applied:** Changed `grep "$serial"` to `grep -F "$serial"` (fixed-string match, not regex).
-
-**Location in file:** Line 415, Phase 1 of wait_for_boot.
-
-## Fixed Issues (already committed)
-
-1. **Emulator SIGHUP** — nohup + disown prevents process death
-2. **curl -sf on 405** — use `-w "%{http_code}"` instead of `-f`
-3. **stdout/stderr mixing** — print_ok/print_fail redirected to stderr
-4. **Path detection** — search multiple candidates + env vars
-5. **Nullable FcmConfig** — KoinModules null checks added
-6. **Backend health check** — proper wait_for_port with timeout
-
-## After Fixing grep Bug
-
-Re-run the full demo:
-```bash
-./demo/demo.sh
-```
-
-Expected flow after fix:
-1. Prerequisites → all green
-2. Backend → reusing (already running)
-3. Users → Alice/Bob logged in, already linked
-4. APK → built
-5. Emulators → User1_light starts, serial detected, boot waits...
-6. **THIS IS WHERE IT FAILS NOW** — grep bug prevents boot detection
-7. If boot detection works: User2_light starts, both boot
-8. Install APK on both
-9. Inject JWT via broadcast
-10. Launch app on both
-11. Summary printed
+1. **Emulator process death** — `setsid` instead of `nohup`+`disown` (new session)
+2. **Signature permission blocks adb** — removed from manifest; demo source-set isolation suffices
+3. **Broadcast needs explicit component** — Android 12+ requires `-n` for implicit broadcasts to stopped apps
+4. **Launch before inject** — app must be running so Koin + DemoTokenReceiver are alive
+5. **curl -sf on 405** — use `-w "%{http_code}"` instead of `-f`
+6. **stdout/stderr mixing** — print_ok/print_fail redirected to stderr
+7. **Path detection** — search multiple candidates + env vars
+8. **grep regex error** — `grep -F` for fixed-string match on `emulator-5554`
+9. **Nullable FcmConfig** — KoinModules null checks added
 
 ## Files Changed
 
@@ -64,19 +43,27 @@ Expected flow after fix:
 - `src/main/kotlin/core/di/KoinModules.kt` — null-safe PushProvider binding
 
 ### signus_app (`feat/demo-mode`)
-- `app/build.gradle.kts` — new "demo" buildType
+- `app/build.gradle.kts` — new "demo" buildType (BASE_URL=10.0.2.2:8080)
 - `app/src/main/java/.../data/local/TokenStore.kt` — restoreToken()
-- `app/src/demo/java/.../DemoTokenReceiver.kt` — NEW broadcast receiver
-- `app/src/demo/AndroidManifest.xml` — NEW receiver declaration with signature permission
+- `app/src/demo/java/.../DemoTokenReceiver.kt` — broadcast receiver (no signature permission)
+- `app/src/demo/AndroidManifest.xml` — receiver declaration (exported, no permission)
 
 ### signus_infra (`feat/demo-script`)
-- `demo/demo.sh` — main script (~580 lines)
+- `demo/demo.sh` — main script (~600 lines, uses setsid + explicit component)
 - `demo/STATUS.md` — this file
-- `README.md` — demo documentation added
+- `README.md` — demo documentation
 
-## How to Resume
+## How to Run
 
-1. Fix the grep bug (one line change)
-2. Run `./demo/demo.sh`
-3. If new issues appear, check emulator logs: `cat /tmp/signus_demo/emu_User1_light.log`
-4. Commit the fix
+```bash
+./demo/demo.sh
+```
+
+Both emulators will boot (~30s each), APK installs, tokens injected, app opens authenticated.
+
+## Emulator Tips
+
+- Emulators must be **visible** (no `-no-window`)
+- `-no-audio` is fine, `-gpu auto` recommended
+- Logs at `/tmp/signus_demo/emu_User1_light.log`
+- Kill emulator: `adb -s emulator-5554 emu kill`
