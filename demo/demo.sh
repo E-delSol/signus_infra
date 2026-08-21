@@ -444,10 +444,8 @@ start_emulator_for_avd() {
     serial_before=$(adb devices | grep -o 'emulator-[0-9]*' | sort)
 
     print_step "Starting emulator: $avd ($label)..."
-    nohup "$ANDROID_HOME/emulator/emulator" -avd "$avd" -no-audio -gpu auto \
+    setsid "$ANDROID_HOME/emulator/emulator" -avd "$avd" -no-audio -gpu auto \
         > "${DEMO_DIR}/emu_${avd}.log" 2>&1 &
-    local emu_pid=$!
-    disown "$emu_pid" 2>/dev/null || true
 
     # Wait for a new emulator serial to appear
     local start_time
@@ -511,27 +509,10 @@ install_and_launch() {
     adb -s "$SERIAL_B" install -r "$APK_PATH" 2>&1 | tail -1
     print_ok "Installed on User B"
 
-    # Inject JWT tokens via broadcast
-    print_step "Injecting demo tokens..."
-
-    local token_a token_b
-    token_a=$(cat "${DEMO_DIR}/token_a")
-    token_b=$(cat "${DEMO_DIR}/token_b")
-
-    adb -s "$SERIAL_A" shell am broadcast \
-        -a es.cronos.duo.ACTION_INJECT_DEMO_TOKEN \
-        --es token "$token_a" \
-        -p es.cronos.duo 2>&1 | tail -1
-    print_ok "Token injected for Alice"
-
-    adb -s "$SERIAL_B" shell am broadcast \
-        -a es.cronos.duo.ACTION_INJECT_DEMO_TOKEN \
-        --es token "$token_b" \
-        -p es.cronos.duo 2>&1 | tail -1
-    print_ok "Token injected for Bob"
-
-    # Launch the app
-    print_step "Launching Signus..."
+    # Launch app FIRST so DemoTokenReceiver is alive to receive the broadcast.
+    # On Android 12+, broadcasts to stopped apps require explicit component targeting,
+    # but it's simpler and more reliable to just launch first.
+    print_step "Launching Signus on both devices..."
 
     adb -s "$SERIAL_A" shell am start \
         -n es.cronos.duo/.MainActivity \
@@ -541,8 +522,30 @@ install_and_launch() {
         -n es.cronos.duo/.MainActivity \
         --activity-clear-top 2>&1 | tail -1
 
-    sleep 2
+    sleep 3  # Let app fully start so Koin + DemoTokenReceiver are ready
     print_ok "Signus launched on both devices"
+
+    # Inject JWT tokens via broadcast (explicit component required by Android 12+)
+    print_step "Injecting demo tokens..."
+
+    local token_a token_b
+    token_a=$(cat "${DEMO_DIR}/token_a")
+    token_b=$(cat "${DEMO_DIR}/token_b")
+
+    adb -s "$SERIAL_A" shell am broadcast \
+        -n es.cronos.duo/.DemoTokenReceiver \
+        -a es.cronos.duo.ACTION_INJECT_DEMO_TOKEN \
+        --es token "$token_a" 2>&1 | tail -1
+    print_ok "Token injected for Alice"
+
+    adb -s "$SERIAL_B" shell am broadcast \
+        -n es.cronos.duo/.DemoTokenReceiver \
+        -a es.cronos.duo.ACTION_INJECT_DEMO_TOKEN \
+        --es token "$token_b" 2>&1 | tail -1
+    print_ok "Token injected for Bob"
+
+    sleep 2
+    print_ok "Demo ready — both devices authenticated"
 }
 
 # -- Summary ------------------------------------------------------------------
