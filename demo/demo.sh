@@ -29,45 +29,14 @@ AVD_B="User2_light"
 
 BOOT_TIMEOUT=300
 
-# -- Resolve repository paths -------------------------------------------------
+# -- Repository paths (set by setup_workspace) --------------------------------
+# Defaults can be overridden via environment for non-standard layouts.
+# When not set, setup_workspace() clones all repos into ./signus_demo/.
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPOS_PARENT="$(dirname "$SCRIPT_DIR")"
-
-# Try common locations:
-# 1. Environment variables (explicit)
-# 2. Siblings of signus_infra parent
-# 3. Known local paths
-BACKEND_DIR="${SIGNUS_BACKEND_DIR:-}"
+WORKSPACE="${DEMO_SIGNUS_DIR:-./signus_demo}"
+INFRA_DIR="${SIGNUS_INFRA_DIR:-}"
 APP_DIR="${SIGNUS_APP_DIR:-}"
-
-if [ -z "$BACKEND_DIR" ]; then
-    for candidate in \
-        "${REPOS_PARENT}/signus_back" \
-        "${REPOS_PARENT}/../signus_back" \
-        "$(dirname "$REPOS_PARENT")/signus_back" \
-        "$HOME/Intellij_Proyects/signus_back" \
-        "$HOME/projects/signus_back"; do
-        if [ -d "$candidate" ]; then
-            BACKEND_DIR="$candidate"
-            break
-        fi
-    done
-fi
-
-if [ -z "$APP_DIR" ]; then
-    for candidate in \
-        "${REPOS_PARENT}/signus_app" \
-        "${REPOS_PARENT}/../signus_app" \
-        "$(dirname "$REPOS_PARENT")/signus_app" \
-        "$HOME/AndroidStudioProjects/Duo" \
-        "$HOME/projects/signus_app"; do
-        if [ -d "$candidate" ]; then
-            APP_DIR="$candidate"
-            break
-        fi
-    done
-fi
+BACKEND_DIR="${SIGNUS_BACKEND_DIR:-}"
 
 # -- Output helpers -----------------------------------------------------------
 
@@ -91,6 +60,73 @@ print_ok()   { echo -e "  ${GREEN}✓${NC} $1"; }
 print_warn() { echo -e "  ${YELLOW}⚠${NC} $1"; }
 print_fail() { echo -e "  ${RED}✗${NC} $1"; }
 print_section() { echo ""; echo -e "${BOLD}-- $1 --${NC}"; }
+
+# -- Workspace setup -----------------------------------------------------------
+
+setup_workspace() {
+    print_section "Setting up workspace"
+
+    local github_org="E-delSol"
+    local infra_branch="feat/demo-script"
+    local app_branch="feat/demo-mode"
+    local back_branch="feat/demo-optional-fcm"
+
+    mkdir -p "$WORKSPACE"
+
+    # Clone signus_infra if not present (and if not already set via env)
+    if [ -z "$INFRA_DIR" ]; then
+        INFRA_DIR="${WORKSPACE}/signus_infra"
+        if [ -d "$INFRA_DIR" ]; then
+            print_ok "signus_infra already present"
+        else
+            print_step "Cloning signus_infra (${infra_branch})..."
+            if git clone --branch "$infra_branch" --depth 1 \
+                "git@github.com:${github_org}/signus_infra.git" "$INFRA_DIR" 2>&1; then
+                print_ok "signus_infra cloned"
+            else
+                print_fail "Failed to clone signus_infra"
+                echo "    Check SSH access to GitHub"
+                exit 1
+            fi
+        fi
+    fi
+
+    # Clone signus_app if not present (and if not already set via env)
+    if [ -z "$APP_DIR" ]; then
+        APP_DIR="${WORKSPACE}/signus_app"
+        if [ -d "$APP_DIR" ]; then
+            print_ok "signus_app already present"
+        else
+            print_step "Cloning signus_app (${app_branch})..."
+            if git clone --branch "$app_branch" --depth 1 \
+                "git@github.com:${github_org}/signus_app.git" "$APP_DIR" 2>&1; then
+                print_ok "signus_app cloned"
+            else
+                print_fail "Failed to clone signus_app"
+                exit 1
+            fi
+        fi
+    fi
+
+    # Clone signus_back if not present (and if not already set via env)
+    if [ -z "$BACKEND_DIR" ]; then
+        BACKEND_DIR="${WORKSPACE}/signus_back"
+        if [ -d "$BACKEND_DIR" ]; then
+            print_ok "signus_back already present"
+        else
+            print_step "Cloning signus_back (${back_branch})..."
+            if git clone --branch "$back_branch" --depth 1 \
+                "git@github.com:${github_org}/signus_back.git" "$BACKEND_DIR" 2>&1; then
+                print_ok "signus_back cloned"
+            else
+                print_fail "Failed to clone signus_back"
+                exit 1
+            fi
+        fi
+    fi
+
+    print_ok "Workspace ready: $WORKSPACE"
+}
 
 # -- Prerequisites ------------------------------------------------------------
 
@@ -133,20 +169,6 @@ check_prerequisites() {
         print_ok "Docker Compose"
     else
         print_fail "Docker Compose not available"; failed=1
-    fi
-
-    if [ -d "$BACKEND_DIR" ]; then
-        print_ok "Backend repo"
-    else
-        print_fail "Backend repo not found at $BACKEND_DIR"
-        echo "    Set SIGNUS_BACKEND_DIR env var"; failed=1
-    fi
-
-    if [ -d "$APP_DIR" ]; then
-        print_ok "App repo"
-    else
-        print_fail "App repo not found at $APP_DIR"
-        echo "    Set SIGNUS_APP_DIR env var"; failed=1
     fi
 
     local avd_list
@@ -372,6 +394,43 @@ build_apk() {
         exit 1
     fi
 
+    # Ensure google-services.json exists (gitignored, needed by Gradle plugin)
+    local gs_json="${APP_DIR}/app/google-services.json"
+    if [ ! -f "$gs_json" ]; then
+        print_warn "google-services.json not found — creating dummy for demo build"
+        cat > "$gs_json" << 'DUMMY_GS'
+{
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "signus-demo-placeholder",
+    "storage_bucket": "signus-demo-placeholder.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+        "android_client_info": {
+          "package_name": "es.cronos.duo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDummyKeyForDemoOnly000000000"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+DUMMY_GS
+    fi
+
     cd "$APP_DIR"
 
     # Discover the correct Gradle task
@@ -443,7 +502,7 @@ start_emulator_for_avd() {
     # Capture serials before launch
     serial_before=$(adb devices | grep -o 'emulator-[0-9]*' | sort)
 
-    print_step "Starting emulator: $avd ($label)..."
+    print_step "Starting emulator: $avd ($label)..." >&2
     setsid "$ANDROID_HOME/emulator/emulator" -avd "$avd" -no-audio -gpu auto \
         > "${DEMO_DIR}/emu_${avd}.log" 2>&1 &
 
@@ -456,12 +515,12 @@ start_emulator_for_avd() {
         local new_serial
         new_serial=$(comm -13 <(echo "$serial_before") <(echo "$serial_after") | head -1)
         if [ -n "$new_serial" ]; then
-            print_ok "$label detected: $new_serial"
+            print_ok "$label detected: $new_serial" >&2
             echo "$new_serial"
             return 0
         fi
         if [ $(($(date +%s) - start_time)) -ge 30 ]; then
-            print_fail "Timeout waiting for $avd to appear in adb"
+            print_fail "Timeout waiting for $avd to appear in adb" >&2
             return 1
         fi
     done
@@ -573,6 +632,7 @@ print_summary() {
 
 main() {
     print_banner
+    setup_workspace
     check_prerequisites
     start_backend
     prepare_demo_users
