@@ -25,40 +25,6 @@ It includes:
 
 ---
 
-## 🧩 What this repository demonstrates
-
-- Designing and deploying a real-world backend infrastructure
-    
-- Running containerized services with Docker Compose
-    
-- Configuring Nginx as a reverse proxy for HTTP and WebSockets
-    
-- Debugging real deployment issues (WebSocket fallback to polling)
-    
-- Structuring infrastructure documentation for maintainability
-    
-
----
-
-## 📌 Overview
-
-`signus_infra` is the infrastructure repository of the Signus ecosystem. It captures how the system is deployed, connected, and secured in a production-oriented setup.
-
-Key characteristics:
-
-- Nginx acts as the single public entry point
-    
-- The backend and database run inside Docker containers
-    
-- Internal services communicate through Docker networking
-    
-- Public exposure is minimized by design
-    
-- WebSocket behavior is validated at the infrastructure level
-    
-
----
-
 ## 🌐 Part of the Signus Ecosystem
 
 Signus is structured as a multi-repository system:
@@ -120,6 +86,86 @@ Repository structure highlights:
     
 - `docs/infrastructure/` — detailed technical documentation
     
+
+---
+
+## 🚀 Demo Launcher
+
+One-command demo that sets up Signus with two linked users on Android emulators.
+
+### Prerequisites
+
+- Java/JDK 11+
+- Android SDK (`ANDROID_HOME` set)
+- `adb` and `emulator` in PATH
+- Docker and Docker Compose
+- AVDs: `User1_light` and `User2_light`
+- Python 3 (for JSON parsing in the script)
+
+### Running the demo
+
+```bash
+./demo/demo.sh
+```
+
+This will:
+1. Check all prerequisites
+2. Start the backend (PostgreSQL + Ktor) in Docker
+3. Create two users (Alice & Bob) and link them
+4. Build the demo APK
+5. Launch two visible emulators
+6. Install the app and inject authentication tokens
+7. Open Signus on both devices ready to use
+
+### Demo Users
+
+| User | Email | Password |
+|------|-------|----------|
+| Alice | alice@signus-demo.com | demo1234 |
+| Bob | bob@signus-demo.com | demo5678 |
+
+### Stopping the demo
+
+The script does not close emulators or the backend. To stop them:
+
+```bash
+# Stop emulators
+adb -s emulator-5554 emu kill
+adb -s emulator-5556 emu kill
+
+# Stop backend
+cd /path/to/signus_back && docker compose down
+```
+
+### Configuration
+
+Environment variables for custom paths:
+
+```bash
+export SIGNUS_BACKEND_DIR=/path/to/signus_back
+export SIGNUS_APP_DIR=/path/to/signus_app
+./demo/demo.sh
+```
+
+### Creating AVDs
+
+If the required AVDs don't exist:
+
+```bash
+$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+    -n User1_light -k "system-images;android-33;google_apis;x86_64" \
+    -d "pixel_4"
+
+$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+    -n User2_light -k "system-images;android-33;google_apis;x86_64" \
+    -d "pixel_4"
+```
+
+### Screenshots
+
+Captured screenshots of all app screens are available in [`signus_demo/captures/`](signus_demo/captures/).
+
+See [captures/README.md](signus_demo/captures/README.md) for the full index.
 
 ---
 
@@ -193,21 +239,6 @@ Detailed infrastructure documentation:
 
 ---
 
-## 🧠 Engineering Highlights
-
-- End-to-end deployment path instead of isolated configuration snippets
-    
-- Clear separation between ingress, application, and data layers
-    
-- Real-world debugging of WebSocket and Nginx interaction
-    
-- Controlled Docker networking for service isolation
-    
-- Documentation treated as part of the engineering deliverable
-    
-
----
-
 ## 🔮 Future Improvements
 
 - HTTPS with Let's Encrypt
@@ -233,81 +264,3 @@ Detailed infrastructure documentation:
 ## 👤 Author
 
 E-delSol
-
----
-
-## Demo Launcher
-
-One-command demo that sets up Signus with two linked users on Android emulators.
-
-### Prerequisites
-
-- Java/JDK 11+
-- Android SDK (`ANDROID_HOME` set)
-- `adb` and `emulator` in PATH
-- Docker and Docker Compose
-- AVDs: `User1_light` and `User2_light`
-- Python 3 (for JSON parsing in the script)
-
-### Running the demo
-
-```bash
-./demo/demo.sh
-```
-
-This will:
-1. Check all prerequisites
-2. Start the backend (PostgreSQL + Ktor) in Docker
-3. Create two users (Alice & Bob) and link them
-4. Build the demo APK
-5. Launch two visible emulators
-6. Install the app and inject authentication tokens
-7. Open Signus on both devices ready to use
-
-### What it does
-
-| Step | Description |
-|------|-------------|
-| Backend | Starts Docker containers on port 8080 (reuses if already running) |
-| Users | Creates `alice@signus-demo.com` and `bob@signus-demo.com` |
-| Linking | Creates a pairing session and confirms it |
-| APK | Builds `assembleDemo` variant (BASE_URL=http://10.0.2.2:8080) |
-| Emulators | Launches `User1_light` and `User2_light` visibly |
-| Auth | Injects JWT tokens via BroadcastReceiver (no UI automation) |
-
-### Stopping the demo
-
-The script does not close emulators or the backend. To stop them:
-
-```bash
-# Stop emulators
-adb -s emulator-5554 emu kill
-adb -s emulator-5556 emu kill
-
-# Stop backend
-cd /path/to/signus_back && docker compose down
-```
-
-### Configuration
-
-Environment variables for custom paths:
-
-```bash
-export SIGNUS_BACKEND_DIR=/path/to/signus_back
-export SIGNUS_APP_DIR=/path/to/signus_app
-./demo/demo.sh
-```
-
-### Creating AVDs
-
-If the required AVDs don't exist:
-
-```bash
-$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
-    -n User1_light -k "system-images;android-33;google_apis;x86_64" \
-    -d "pixel_4"
-
-$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
-    -n User2_light -k "system-images;android-33;google_apis;x86_64" \
-    -d "pixel_4"
-```
