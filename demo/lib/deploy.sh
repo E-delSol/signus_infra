@@ -48,7 +48,24 @@ install_and_launch() {
         --es token "$token_b" 2>&1 | tail -1
     print_ok "Token injected for Bob"
 
+    # Restart app so SplashScreen re-evaluates navigation with the new token.
+    # Without restart, the app stays on the Pairing screen because the
+    # navigation was already decided before the token was injected.
     sleep 2
+    print_step "Restarting apps to apply tokens..."
+
+    adb -s "$SERIAL_A" shell am force-stop es.cronos.duo
+    adb -s "$SERIAL_B" shell am force-stop es.cronos.duo
+    sleep 1
+
+    adb -s "$SERIAL_A" shell am start \
+        -n es.cronos.duo/.MainActivity \
+        --activity-clear-top 2>&1 | tail -1
+    adb -s "$SERIAL_B" shell am start \
+        -n es.cronos.duo/.MainActivity \
+        --activity-clear-top 2>&1 | tail -1
+
+    sleep 3
     print_ok "Demo ready — both devices authenticated"
 }
 
