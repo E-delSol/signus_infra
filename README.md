@@ -116,17 +116,19 @@ Clone the repository and run the demo script:
 
 **Linux / macOS:**
 ```bash
-git clone git@github.com:E-delSol/signus_infra.git
+git clone https://github.com/E-delSol/signus_infra.git
 cd signus_infra
 ./demo/demo.sh
 ```
 
 **Windows (PowerShell):**
 ```powershell
-git clone git@github.com:E-delSol/signus_infra.git
+git clone https://github.com/E-delSol/signus_infra.git
 cd signus_infra
 .\demo\demo.ps1
 ```
+
+> **Tip:** If you have SSH keys configured, you can use `git@github.com:E-delSol/signus_infra.git` instead.
 
 #### Windows Setup
 
