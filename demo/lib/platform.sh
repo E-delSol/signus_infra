@@ -16,6 +16,71 @@ detect_platform() {
     export PLATFORM
 }
 
+# -- Android SDK Detection ----------------------------------------------------
+
+detect_android_sdk() {
+    # If ANDROID_HOME is already set and valid, nothing to do
+    if [ -n "${ANDROID_HOME:-}" ] && [ -d "$ANDROID_HOME" ]; then
+        return 0
+    fi
+
+    # Check ANDROID_SDK_ROOT as fallback
+    if [ -n "${ANDROID_SDK_ROOT:-}" ] && [ -d "$ANDROID_SDK_ROOT" ]; then
+        export ANDROID_HOME="$ANDROID_SDK_ROOT"
+        return 0
+    fi
+
+    # Auto-detect based on platform
+    local candidate=""
+    case "$PLATFORM" in
+        linux)
+            candidate="$HOME/Android/Sdk"
+            ;;
+        macos)
+            candidate="$HOME/Library/Android/sdk"
+            ;;
+        windows)
+            # Git Bash: $LOCALAPPDATA maps to /c/Users/<user>/AppData/Local
+            if [ -n "${LOCALAPPDATA:-}" ]; then
+                candidate="${LOCALAPPDATA}/Android/Sdk"
+            fi
+            ;;
+    esac
+
+    if [ -n "$candidate" ] && [ -d "$candidate" ]; then
+        export ANDROID_HOME="$candidate"
+        # Add platform-tools and emulator to PATH if not already there
+        case ":$PATH:" in
+            *":$ANDROID_HOME/platform-tools:"*) ;;
+            *) export PATH="$ANDROID_HOME/platform-tools:$PATH" ;;
+        esac
+        case ":$PATH:" in
+            *":$ANDROID_HOME/emulator:"*) ;;
+            *) export PATH="$ANDROID_HOME/emulator:$PATH" ;;
+        esac
+        return 0
+    fi
+
+    return 1
+}
+
+# Resolve the emulator binary path.
+# Returns the path if found, empty string otherwise.
+platform_emulator_bin() {
+    # Try ANDROID_HOME first
+    if [ -n "${ANDROID_HOME:-}" ] && [ -x "$ANDROID_HOME/emulator/emulator" ]; then
+        echo "$ANDROID_HOME/emulator/emulator"
+        return 0
+    fi
+    # Fallback to PATH
+    if command -v emulator &>/dev/null; then
+        command -v emulator
+        return 0
+    fi
+    echo ""
+    return 1
+}
+
 # -- Wrappers -----------------------------------------------------------------
 
 # Launch a process in a new session (detached from parent shell).

@@ -36,11 +36,18 @@ start_emulator_for_avd() {
     local avd=$1 label=$2
     local serial_before serial_after
 
+    local emulator_bin
+    emulator_bin=$(platform_emulator_bin)
+    if [ -z "$emulator_bin" ]; then
+        print_fail "Cannot start $avd: emulator binary not found"
+        return 1
+    fi
+
     # Capture serials before launch
     serial_before=$(adb devices | grep -o 'emulator-[0-9]*' | sort)
 
     print_step "Starting emulator: $avd ($label)..." >&2
-    platform_setsid "$ANDROID_HOME/emulator/emulator" -avd "$avd" -no-audio -gpu auto \
+    platform_setsid "$emulator_bin" -avd "$avd" -no-audio -gpu auto \
         > "${DEMO_DIR}/emu_${avd}.log" 2>&1 &
 
     # Wait for a new emulator serial to appear
