@@ -112,13 +112,19 @@ One-command demo that sets up Signus with two linked users on Android emulators.
 
 ### Running the demo
 
+Clone the repository and run the demo script:
+
 **Linux / macOS:**
 ```bash
+git clone git@github.com:E-delSol/signus_infra.git
+cd signus_infra
 ./demo/demo.sh
 ```
 
 **Windows (PowerShell):**
 ```powershell
+git clone git@github.com:E-delSol/signus_infra.git
+cd signus_infra
 .\demo\demo.ps1
 ```
 
