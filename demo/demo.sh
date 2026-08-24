@@ -29,18 +29,20 @@ AVD_B="User2_light"
 
 BOOT_TIMEOUT=300
 
-# -- Repository paths (set by setup_workspace) --------------------------------
-# Defaults can be overridden via environment for non-standard layouts.
-# When not set, setup_workspace() clones all repos into ./signus_demo/.
-
-WORKSPACE="${DEMO_SIGNUS_DIR:-./signus_demo}"
-INFRA_DIR="${SIGNUS_INFRA_DIR:-}"
-APP_DIR="${SIGNUS_APP_DIR:-}"
-BACKEND_DIR="${SIGNUS_BACKEND_DIR:-}"
-
 # -- Source lib modules -------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# -- Repository paths (set by setup_workspace) --------------------------------
+# Defaults can be overridden via environment for non-standard layouts.
+# INFRA_DIR defaults to the repo root where this script lives (the user
+# already has signus_infra cloned — that's how they got this script).
+# setup_workspace() clones the remaining repos into ./signus_demo/.
+
+WORKSPACE="${DEMO_SIGNUS_DIR:-./signus_demo}"
+INFRA_DIR="${SIGNUS_INFRA_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+APP_DIR="${SIGNUS_APP_DIR:-}"
+BACKEND_DIR="${SIGNUS_BACKEND_DIR:-}"
 
 # output.sh first (other modules depend on print_* functions)
 source "$SCRIPT_DIR/lib/output.sh"

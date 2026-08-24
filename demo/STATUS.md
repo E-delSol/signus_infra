@@ -2,11 +2,13 @@
 
 ## Current State
 
+All demo code lives on **`main`** across every repository.
+
 | Component | Branch | Status |
 |-----------|--------|--------|
-| signus_back | `feat/demo-optional-fcm` | ✅ Committed, compiles, Docker builds |
-| signus_app | `feat/demo-mode` | ✅ Committed, APK builds (assembleDemo) |
-| signus_infra | `feat/demo-script` | ✅ Committed, tested end-to-end |
+| signus_back | `main` | ✅ Committed, compiles, Docker builds |
+| signus_app | `main` | ✅ Committed, APK builds (assembleDemo) |
+| signus_infra | `main` | ✅ Committed, tested end-to-end |
 
 ## ✅ End-to-End Verified (21 Aug 2026)
 
@@ -38,18 +40,19 @@ Full flow tested manually on physical emulators:
 
 ## Files Changed
 
-### signus_back (`feat/demo-optional-fcm`)
+### signus_back
 - `src/main/kotlin/core/config/AppConfig.kt` — FcmConfig.serviceAccountJson: String?
 - `src/main/kotlin/core/di/KoinModules.kt` — null-safe PushProvider binding
 
-### signus_app (`feat/demo-mode`)
+### signus_app
 - `app/build.gradle.kts` — new "demo" buildType (BASE_URL=10.0.2.2:8080)
 - `app/src/main/java/.../data/local/TokenStore.kt` — restoreToken()
 - `app/src/demo/java/.../DemoTokenReceiver.kt` — broadcast receiver (no signature permission)
 - `app/src/demo/AndroidManifest.xml` — receiver declaration (exported, no permission)
 
-### signus_infra (`feat/demo-script`)
-- `demo/demo.sh` — main script (~600 lines, uses setsid + explicit component)
+### signus_infra
+- `demo/demo.sh` — main script, auto-detects INFRA_DIR from repo root
+- `demo/lib/workspace.sh` — workspace setup (clones app + backend from main)
 - `demo/STATUS.md` — this file
 - `README.md` — demo documentation
 
