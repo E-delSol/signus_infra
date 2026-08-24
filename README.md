@@ -125,7 +125,7 @@ cd signus_infra
 ```powershell
 git clone https://github.com/E-delSol/signus_infra.git
 cd signus_infra
-.\demo\demo.ps1
+& "C:\Program Files\Git\bin\bash.exe" ".\demo\demo.sh"
 ```
 
 > **Tip:** If you have SSH keys configured, you can use `git@github.com:E-delSol/signus_infra.git` instead.
