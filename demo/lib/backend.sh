@@ -28,7 +28,7 @@ start_backend() {
     fi
 
     # Check if port is occupied by something else
-    if command -v lsof &>/dev/null && lsof -i ":${BACKEND_PORT}" &>/dev/null 2>&1; then
+    if platform_port_in_use "$BACKEND_PORT"; then
         print_warn "Port ${BACKEND_PORT} occupied by another process"
         echo "    Stop it manually or change BACKEND_PORT in this script"
         exit 1

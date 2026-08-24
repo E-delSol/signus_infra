@@ -93,6 +93,14 @@ Repository structure highlights:
 
 One-command demo that sets up Signus with two linked users on Android emulators.
 
+### Platform Support
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| Linux | ✅ Tested | Full support |
+| macOS | ⚠️ Not tested | Should work (bash + Android SDK). Report any issues. |
+| Windows | ✅ Tested | Use `.\demo\demo.ps1` (Git for Windows required) |
+
 ### Prerequisites
 
 - Java/JDK 11+
@@ -100,13 +108,36 @@ One-command demo that sets up Signus with two linked users on Android emulators.
 - `adb` and `emulator` in PATH
 - Docker and Docker Compose
 - AVDs: `User1_light` and `User2_light`
-- Python 3 (for JSON parsing in the script)
+- `jq` or Python 3 (for JSON parsing — `jq` preferred)
 
 ### Running the demo
 
+**Linux / macOS:**
 ```bash
 ./demo/demo.sh
 ```
+
+**Windows (PowerShell):**
+```powershell
+.\demo\demo.ps1
+```
+
+#### Windows Setup
+
+1. Install [Git for Windows](https://git-scm.com/download/win)
+2. Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
+3. Install Android SDK and set `ANDROID_HOME` environment variable
+4. Run: `.\demo\demo.ps1`
+
+#### macOS Setup
+
+1. Install Xcode Command Line Tools: `xcode-select --install`
+2. Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
+3. Install Android SDK (via Android Studio or command-line tools)
+4. Run: `./demo/demo.sh`
+
+> **Note:** macOS has not been physically tested. The script should work
+> based on bash compatibility, but report any issues.
 
 This will:
 1. Check all prerequisites

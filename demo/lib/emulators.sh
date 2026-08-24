@@ -40,7 +40,7 @@ start_emulator_for_avd() {
     serial_before=$(adb devices | grep -o 'emulator-[0-9]*' | sort)
 
     print_step "Starting emulator: $avd ($label)..." >&2
-    setsid "$ANDROID_HOME/emulator/emulator" -avd "$avd" -no-audio -gpu auto \
+    platform_setsid "$ANDROID_HOME/emulator/emulator" -avd "$avd" -no-audio -gpu auto \
         > "${DEMO_DIR}/emu_${avd}.log" 2>&1 &
 
     # Wait for a new emulator serial to appear

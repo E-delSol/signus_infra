@@ -33,6 +33,11 @@ BOOT_TIMEOUT=300
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# -- Platform detection -------------------------------------------------------
+
+source "$SCRIPT_DIR/lib/platform.sh"
+detect_platform
+
 # -- Repository paths (set by setup_workspace) --------------------------------
 # Defaults can be overridden via environment for non-standard layouts.
 # INFRA_DIR defaults to the repo root where this script lives (the user

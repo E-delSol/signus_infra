@@ -50,7 +50,7 @@ DUMMY_GS
 
     # Discover the correct Gradle task
     print_step "Running Gradle assembleDemo..."
-    if ./gradlew assembleDemo --quiet 2>&1 | tail -3; then
+    if platform_gradlew assembleDemo --quiet | tail -3; then
         print_ok "APK built"
     else
         print_fail "APK build failed"
