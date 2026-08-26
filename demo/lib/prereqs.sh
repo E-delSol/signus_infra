@@ -14,12 +14,7 @@ check_prerequisites() {
         print_ok "Java"
     else
         print_fail "Java not found"
-        echo "  → Install a JDK (17+ recommended):"
-        case "$PLATFORM" in
-            linux)  echo "    sudo apt install openjdk-17-jdk  # Ubuntu/Debian" ;;
-            macos)  echo "    brew install openjdk@17           # Homebrew" ;;
-            windows) echo "    winget install Microsoft.OpenJDK.17  # or download from https://adoptium.net" ;;
-        esac
+        echo "  → See README.md#javajdk-17+ for installation instructions"
         failed=1
     fi
 
@@ -28,13 +23,7 @@ check_prerequisites() {
         print_ok "ANDROID_HOME ($ANDROID_HOME)"
     else
         print_warn "ANDROID_HOME not set"
-        echo "  → Install Android Studio: https://developer.android.com/studio"
-        echo "  → Then set ANDROID_HOME:"
-        case "$PLATFORM" in
-            linux)  echo "    export ANDROID_HOME=\"\$HOME/Android/Sdk\"" ;;
-            macos)  echo "    export ANDROID_HOME=\"\$HOME/Library/Android/sdk\"" ;;
-            windows) echo "    setx ANDROID_HOME \"%LOCALAPPDATA%\\Android\\Sdk\"" ;;
-        esac
+        echo "  → See README.md#android-sdk-optional for installation instructions"
         echo "  → The demo will continue without Android emulators."
         warnings=$((warnings + 1))
     fi
@@ -46,9 +35,7 @@ check_prerequisites() {
         print_ok "adb ($ANDROID_HOME/platform-tools/adb)"
     else
         print_warn "adb not found in PATH"
-        echo "  → Install Android SDK Platform Tools:"
-        echo "    https://developer.android.com/tools/releases/platform-tools"
-        echo "  → Or install Android Studio (includes adb)."
+        echo "  → See README.md#android-sdk-optional for installation instructions"
         warnings=$((warnings + 1))
     fi
 
@@ -59,9 +46,7 @@ check_prerequisites() {
         print_ok "emulator ($emulator_bin)"
     else
         print_warn "emulator not found"
-        echo "  → Install Android Emulator:"
-        echo "    https://developer.android.com/studio/run/emulator-install"
-        echo "  → Or install Android Studio (includes emulator)."
+        echo "  → See README.md#android-sdk-optional for installation instructions"
         warnings=$((warnings + 1))
     fi
 
@@ -74,8 +59,7 @@ check_prerequisites() {
             print_ok "AVD $AVD_A"
         else
             print_warn "AVD $AVD_A not found"
-            echo "  → Create AVDs in Android Studio → Device Manager"
-            echo "  → Or run: \$ANDROID_HOME/emulator/emulator -list-avds"
+            echo "  → See README.md#avds-optional for creation instructions"
             warnings=$((warnings + 1))
         fi
 
@@ -83,8 +67,7 @@ check_prerequisites() {
             print_ok "AVD $AVD_B"
         else
             print_warn "AVD $AVD_B not found"
-            echo "  → Create AVDs in Android Studio → Device Manager"
-            echo "  → Or run: \$ANDROID_HOME/emulator/emulator -list-avds"
+            echo "  → See README.md#avds-optional for creation instructions"
             warnings=$((warnings + 1))
         fi
     fi
@@ -94,12 +77,7 @@ check_prerequisites() {
         print_ok "Docker"
     else
         print_fail "Docker not running or not installed"
-        echo "  → Install Docker Desktop:"
-        case "$PLATFORM" in
-            linux)  echo "    https://docs.docker.com/engine/install/" ;;
-            macos)  echo "    https://docs.docker.com/desktop/install/mac-install/" ;;
-            windows) echo "    https://docs.docker.com/desktop/install/windows-install/" ;;
-        esac
+        echo "  → See README.md#docker for installation instructions"
         echo "  → Make sure Docker Desktop is running before retrying."
         failed=1
     fi
@@ -109,8 +87,7 @@ check_prerequisites() {
         print_ok "Docker Compose"
     else
         print_fail "Docker Compose not available"
-        echo "  → Docker Compose is included with Docker Desktop."
-        echo "  → If using Docker Engine only: https://docs.docker.com/compose/install/"
+        echo "  → See README.md#docker for installation instructions (Docker Compose is included with Docker Desktop)."
         failed=1
     fi
 
