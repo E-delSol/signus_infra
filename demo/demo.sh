@@ -33,6 +33,12 @@ BOOT_TIMEOUT=300
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# -- Platform detection -------------------------------------------------------
+
+source "$SCRIPT_DIR/lib/platform.sh"
+detect_platform
+detect_android_sdk
+
 # -- Repository paths (set by setup_workspace) --------------------------------
 # Defaults can be overridden via environment for non-standard layouts.
 # INFRA_DIR defaults to the repo root where this script lives (the user
@@ -62,10 +68,24 @@ main() {
     start_backend
     prepare_demo_users
     build_apk
-    start_emulators
-    wait_for_emulators
-    install_and_launch
-    print_summary
+
+    # Emulator steps require Android SDK + emulator + AVDs
+    local emulator_bin
+    emulator_bin=$(platform_emulator_bin)
+    if [ -n "$emulator_bin" ] && [ -n "${ANDROID_HOME:-}" ]; then
+        start_emulators
+        wait_for_emulators
+        install_and_launch
+        print_summary
+    else
+        print_section "Android emulators not available"
+        echo "  The backend is running and the APK was built."
+        echo "  To test on a device/emulator manually:"
+        echo "    1. Install the APK from: $APK_PATH"
+        echo "    2. Register two users and link them"
+        echo "    3. Backend API: $API"
+        echo ""
+    fi
 }
 
 main "$@"

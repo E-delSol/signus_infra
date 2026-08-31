@@ -21,7 +21,7 @@ setup_workspace() {
         else
             print_step "Cloning signus_app (${app_branch})..."
             if git clone --branch "$app_branch" --depth 1 \
-                "git@github.com:${github_org}/signus_app.git" "$APP_DIR" 2>&1; then
+                "https://github.com/${github_org}/signus_app.git" "$APP_DIR" 2>&1; then
                 print_ok "signus_app cloned"
             else
                 print_fail "Failed to clone signus_app"
@@ -38,7 +38,7 @@ setup_workspace() {
         else
             print_step "Cloning signus_back (${back_branch})..."
             if git clone --branch "$back_branch" --depth 1 \
-                "git@github.com:${github_org}/signus_back.git" "$BACKEND_DIR" 2>&1; then
+                "https://github.com/${github_org}/signus_back.git" "$BACKEND_DIR" 2>&1; then
                 print_ok "signus_back cloned"
             else
                 print_fail "Failed to clone signus_back"

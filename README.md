@@ -34,6 +34,9 @@ Signus is structured as a multi-repository system:
 - [signus_back](https://github.com/E-delSol/signus_back) — Backend API (Ktor + WebSockets)
     
 - **signus_infra** — Infrastructure, deployment, and technical documentation (this repository)
+- [signus_landing](https://github.com/E-delSol/signus_landing) — Landing page
+    
+🌐 **Live:** [edelsol.github.io/signus_landing](https://edelsol.github.io/signus_landing/)
     
 
 ---
@@ -93,20 +96,267 @@ Repository structure highlights:
 
 One-command demo that sets up Signus with two linked users on Android emulators.
 
+### Platform Support
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| Linux | ✅ Tested | Full support |
+| macOS | ⚠️ Not tested | Should work (bash + Android SDK). Report any issues. |
+| Windows | ⚠️ Not tested | Use `.\demo\demo.ps1` (Git for Windows required). Report any issues. |
+
 ### Prerequisites
 
-- Java/JDK 11+
-- Android SDK (`ANDROID_HOME` set)
-- `adb` and `emulator` in PATH
-- Docker and Docker Compose
-- AVDs: `User1_light` and `User2_light`
-- Python 3 (for JSON parsing in the script)
+The demo requires these tools. Install anything that's missing before running.
+
+| Tool | Required | Purpose |
+|------|----------|---------|
+| Java/JDK 17+ | ✅ Fatal | Backend compilation |
+| Docker | ✅ Fatal | Backend services (PostgreSQL + Ktor) |
+| Docker Compose | ✅ Fatal | Service orchestration |
+| Android SDK | ⚠️ Optional | Emulator support (backend works without it) |
+| adb | ⚠️ Optional | Device communication |
+| emulator | ⚠️ Optional | Virtual Android devices |
+| AVDs | ⚠️ Optional | Pre-configured virtual devices |
+| jq or Python 3 | ⚠️ Optional | JSON parsing in scripts |
+
+> **Fatal** = demo won't start without it. **Optional** = backend works, emulators won't launch.
+
+#### Java/JDK 17+
+
+**Verify:**
+
+```bash
+java -version
+```
+
+Should show `17` or higher.
+
+<details>
+<summary>Linux (Ubuntu/Debian)</summary>
+
+```bash
+sudo apt update
+sudo apt install openjdk-17-jdk
+```
+
+</details>
+
+<details>
+<summary>Linux (Fedora/RHEL)</summary>
+
+```bash
+sudo dnf install java-17-openjdk-devel
+```
+
+</details>
+
+<details>
+<summary>macOS</summary>
+
+```bash
+brew install openjdk@17
+```
+
+If you don't have Homebrew: https://brew.sh
+
+</details>
+
+<details>
+<summary>Windows</summary>
+
+```powershell
+winget install Microsoft.OpenJDK.17
+```
+
+Or download from https://adoptium.net
+
+</details>
+
+#### Docker
+
+**Verify:**
+
+```bash
+docker --version
+docker compose version
+```
+
+<details>
+<summary>Linux</summary>
+
+Follow the official guide for your distro:
+
+- Ubuntu/Debian: https://docs.docker.com/engine/install/ubuntu/
+- Fedora: https://docs.docker.com/engine/install/fedora/
+
+Quick version (Ubuntu):
+
+```bash
+# Add Docker's official GPG key
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# Run without sudo (optional but recommended)
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+</details>
+
+<details>
+<summary>macOS</summary>
+
+```bash
+brew install --cask docker
+```
+
+Or download Docker Desktop: https://docs.docker.com/desktop/install/mac-install/
+
+</details>
+
+<details>
+<summary>Windows</summary>
+
+Download Docker Desktop: https://docs.docker.com/desktop/install/windows-install/
+
+Requires WSL 2 or Hyper-V enabled.
+
+</details>
+
+#### Android SDK (Optional)
+
+Only needed if you want emulators. The backend API works without it.
+
+**Verify:**
+
+```bash
+echo $ANDROID_HOME
+adb --version
+```
+
+**Install:**
+
+1. Download Android Studio: https://developer.android.com/studio
+2. Run the installer and select "Standard" setup
+3. Open Android Studio → SDK Manager → install the latest SDK
+
+**Set ANDROID_HOME:**
+
+<details>
+<summary>Linux</summary>
+
+Add to `~/.bashrc` or `~/.zshrc`:
+
+```bash
+export ANDROID_HOME="$HOME/Android/Sdk"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+```
+
+</details>
+
+<details>
+<summary>macOS</summary>
+
+Add to `~/.zshrc` (or `~/.bashrc`):
+
+```bash
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+```
+
+</details>
+
+<details>
+<summary>Windows</summary>
+
+```powershell
+setx ANDROID_HOME "%LOCALAPPDATA%\Android\Sdk"
+```
+
+Then add `%ANDROID_HOME%\platform-tools` and `%ANDROID_HOME%\emulator` to your PATH.
+
+</details>
+
+#### AVDs (Optional)
+
+If emulators are available but the required AVDs are missing:
+
+```bash
+$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+    -n User1_light -k "system-images;android-33;google_apis;x86_64" \
+    -d "pixel_4"
+
+$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+    -n User2_light -k "system-images;android-33;google_apis;x86_64" \
+    -d "pixel_4"
+```
+
+#### jq or Python 3 (Optional)
+
+Used for JSON parsing in demo scripts. `jq` is preferred.
+
+```bash
+# Linux
+sudo apt install jq
+
+# macOS
+brew install jq
+
+# Windows (Git Bash)
+winget install jqlang.jq
+```
+
+If neither is available, the script will fall back to Python 3.
 
 ### Running the demo
 
+Clone the repository and run the demo script:
+
+**Linux / macOS:**
 ```bash
+git clone https://github.com/E-delSol/signus_infra.git
+cd signus_infra
 ./demo/demo.sh
 ```
+
+**Windows (PowerShell):**
+```powershell
+git clone https://github.com/E-delSol/signus_infra.git
+cd signus_infra
+& "C:\Program Files\Git\bin\bash.exe" ".\demo\demo.sh"
+```
+
+> **Tip:** If you have SSH keys configured, you can use `git@github.com:E-delSol/signus_infra.git` instead.
+
+#### Windows Setup
+
+1. Install [Git for Windows](https://git-scm.com/download/win)
+2. Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
+3. Install Android SDK and set `ANDROID_HOME` environment variable
+4. Run: `.\demo\demo.ps1`
+
+#### macOS Setup
+
+1. Install Xcode Command Line Tools: `xcode-select --install`
+2. Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
+3. Install Android SDK (via Android Studio or command-line tools)
+4. Run: `./demo/demo.sh`
+
+> **Note:** macOS has not been physically tested. The script should work
+> based on bash compatibility, but report any issues.
 
 This will:
 1. Check all prerequisites
@@ -163,9 +413,9 @@ $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
 
 ### Screenshots
 
-Captured screenshots of all app screens are available in [`signus_demo/captures/`](signus_demo/captures/).
+Captured screenshots of all app screens are available in [`demo/captures/`](demo/captures/).
 
-See [captures/README.md](signus_demo/captures/README.md) for the full index.
+See [captures/README.md](demo/captures/README.md) for the full index.
 
 ---
 

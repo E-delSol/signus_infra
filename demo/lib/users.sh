@@ -11,7 +11,7 @@ create_or_login_user() {
         -d "{\"email\":\"${email}\",\"password\":\"${password}\",\"displayName\":\"${name}\"}" 2>/dev/null) || true
 
     if [ -n "$response" ]; then
-        token=$(echo "$response" | python3 -c "import sys,json; print(json.load(sys.stdin)['accessToken'])" 2>/dev/null) || true
+        token=$(platform_json_field "$response" "accessToken") || true
         if [ -n "$token" ]; then
             print_ok "${label} created" >&2
             echo "$token"
@@ -25,7 +25,7 @@ create_or_login_user() {
         -d "{\"email\":\"${email}\",\"password\":\"${password}\"}" 2>/dev/null) || true
 
     if [ -n "$response" ]; then
-        token=$(echo "$response" | python3 -c "import sys,json; print(json.load(sys.stdin)['accessToken'])" 2>/dev/null) || true
+        token=$(platform_json_field "$response" "accessToken") || true
         if [ -n "$token" ]; then
             print_ok "${label} logged in (already existed)" >&2
             echo "$token"
@@ -44,7 +44,7 @@ verify_or_create_linking() {
     me_response=$(curl -sf -H "Authorization: Bearer ${TOKEN_A}" "${API}/me" 2>/dev/null) || true
 
     if [ -n "$me_response" ]; then
-        partner_id=$(echo "$me_response" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('partnerId') or '')" 2>/dev/null) || true
+        partner_id=$(platform_json_field_nullable "$me_response" "partnerId") || true
         if [ -n "$partner_id" ]; then
             print_ok "Alice <-> Bob already linked"
             return 0
@@ -64,7 +64,7 @@ verify_or_create_linking() {
         return 1
     fi
 
-    link_code=$(echo "$session_response" | python3 -c "import sys,json; print(json.load(sys.stdin)['linkCode'])" 2>/dev/null) || true
+    link_code=$(platform_json_field "$session_response" "linkCode") || true
 
     if [ -z "$link_code" ]; then
         print_fail "Failed to extract link code"
@@ -81,7 +81,7 @@ verify_or_create_linking() {
     if [ -z "$confirm_response" ]; then
         # Might be 409 (already linked) -- verify
         me_response=$(curl -sf -H "Authorization: Bearer ${TOKEN_A}" "${API}/me" 2>/dev/null) || true
-        partner_id=$(echo "$me_response" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('partnerId') or '')" 2>/dev/null) || true
+        partner_id=$(platform_json_field_nullable "$me_response" "partnerId") || true
         if [ -n "$partner_id" ]; then
             print_ok "Alice <-> Bob already linked"
             return 0
