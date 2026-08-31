@@ -34,6 +34,7 @@ Signus is structured as a multi-repository system:
 - [signus_back](https://github.com/E-delSol/signus_back) — Backend API (Ktor + WebSockets)
     
 - **signus_infra** — Infrastructure, deployment, and technical documentation (this repository)
+- [signus_landing](https://github.com/E-delSol/signus_landing) — Landing page
     
 
 ---
